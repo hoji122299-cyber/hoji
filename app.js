@@ -7,6 +7,27 @@
   // before its launch animation settles, so re-measure a few times early on.
   function setAppHeight() {
     document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+    updateDebugInfo();
+  }
+
+  function updateDebugInfo() {
+    var el = document.getElementById("debug-info");
+    if (!el) return;
+    var standaloneMedia = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
+    var lines = [
+      "innerW x innerH: " + window.innerWidth + " x " + window.innerHeight,
+      "clientW x clientH: " + document.documentElement.clientWidth + " x " + document.documentElement.clientHeight,
+      "screen: " + window.screen.width + " x " + window.screen.height,
+      "devicePixelRatio: " + window.devicePixelRatio,
+      "navigator.standalone: " + navigator.standalone,
+      "display-mode standalone: " + standaloneMedia,
+      "--app-height: " + getComputedStyle(document.documentElement).getPropertyValue("--app-height"),
+      "phone rect: " + JSON.stringify((function () {
+        var r = document.querySelector(".phone").getBoundingClientRect();
+        return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(r.bottom) };
+      })())
+    ];
+    el.textContent = lines.join("\n");
   }
   setAppHeight();
   window.addEventListener("load", setAppHeight);
