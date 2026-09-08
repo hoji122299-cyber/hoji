@@ -3,15 +3,23 @@
 
   // iOS Safari's address bar changes the visible viewport height without
   // always updating CSS dvh until the user scrolls, so measure it directly.
+  // A standalone home-screen launch can also report a transitional height
+  // before its launch animation settles, so re-measure a few times early on.
   function setAppHeight() {
     document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
   }
   setAppHeight();
+  window.addEventListener("load", setAppHeight);
+  window.addEventListener("pageshow", setAppHeight);
   window.addEventListener("resize", setAppHeight);
   window.addEventListener("orientationchange", setAppHeight);
+  document.addEventListener("visibilitychange", setAppHeight);
   if (window.visualViewport) {
     window.visualViewport.addEventListener("resize", setAppHeight);
   }
+  [50, 150, 300, 600, 1200].forEach(function (ms) {
+    setTimeout(setAppHeight, ms);
+  });
 
   var STORAGE_KEY = "dailyPlanData_v1";
   var WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"];
