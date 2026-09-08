@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Daily Plan</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="phone">
+
+    <!-- Home Screen -->
+    <section id="home-screen" class="screen active">
+      <div class="lock-bg">
+        <div class="lock-date" id="lock-date"></div>
+        <div class="lock-time" id="lock-time"></div>
+        <div class="today-plan-list" id="today-plan-list"></div>
+      </div>
+      <button id="open-planner-btn" class="fab" title="데일리 플랜 만들기">+</button>
+    </section>
+
+    <!-- Planner Screen -->
+    <section id="planner-screen" class="screen">
+      <header class="planner-header">
+        <button id="back-btn" class="icon-btn" aria-label="뒤로">←</button>
+        <h1>데일리 플랜</h1>
+        <span class="header-spacer"></span>
+      </header>
+
+      <div class="week-nav">
+        <button id="prev-week-btn" class="icon-btn" aria-label="이전 주">‹</button>
+        <div class="week-days" id="week-days"></div>
+        <button id="next-week-btn" class="icon-btn" aria-label="다음 주">›</button>
+      </div>
+
+      <div class="selected-date-label" id="selected-date-label"></div>
+
+      <div class="clock-wrap">
+        <svg id="clock-svg" viewBox="0 0 340 340"></svg>
+      </div>
+      <p class="hint">원을 클릭해서 플랜을 추가해보세요 (30분 단위)</p>
+
+      <div class="plan-table-wrap">
+        <table class="plan-table">
+          <thead><tr><th>시간</th><th>내용</th><th></th></tr></thead>
+          <tbody id="plan-table-body"></tbody>
+        </table>
+        <p id="empty-msg" class="empty-msg">아직 등록된 플랜이 없어요</p>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- Add / Edit Modal -->
+  <div id="modal-backdrop" class="modal-backdrop">
+    <div class="modal">
+      <h2 id="modal-title">플랜 추가</h2>
+      <label>시작 시간
+        <input type="time" id="input-start" step="1800">
+      </label>
+      <label>종료 시간
+        <input type="time" id="input-end" step="1800">
+      </label>
+      <label>내용
+        <textarea id="input-text" rows="3" placeholder="예: 아침 식사 및 준비"></textarea>
+      </label>
+      <div class="modal-actions">
+        <button id="delete-btn" class="btn btn-danger">삭제</button>
+        <div class="modal-actions-right">
+          <button id="cancel-btn" class="btn btn-ghost">취소</button>
+          <button id="save-btn" class="btn btn-primary">저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

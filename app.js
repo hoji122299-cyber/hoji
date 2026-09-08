@@ -1,0 +1,383 @@
+(function () {
+  "use strict";
+
+  var STORAGE_KEY = "dailyPlanData_v1";
+  var WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"];
+  var WEEKDAY_KO_FULL = ["일", "월", "화", "수", "목", "금", "토"];
+  var PALETTE = [
+    "#FFB3BA", "#FFDFBA", "#FFF6BA", "#BAFFC9", "#BAE1FF",
+    "#D5BAFF", "#FFC9DE", "#C9FFD5", "#BAF2FF", "#FFE1BA", "#E1BAFF"
+  ];
+
+  var SVG_NS = "http://www.w3.org/2000/svg";
+  var CX = 170, CY = 170, TRACK_R = 122, TICK_R1 = 122, TICK_R2 = 131, LABEL_R = 148, WEDGE_LABEL_R = 82;
+
+  // ---- state ----
+  var allPlans = loadPlans();
+  var plannerWeekOffset = 0;
+  var selectedDate = new Date();
+  var editingId = null;
+
+  // ---- storage helpers ----
+  function loadPlans() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
+    } catch (e) {
+      return {};
+    }
+  }
+  function savePlans() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(allPlans));
+  }
+
+  // ---- date/time helpers ----
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+  function dateKey(d) {
+    return d.getFullYear() + "-" + pad2(d.getMonth() + 1) + "-" + pad2(d.getDate());
+  }
+  function toMin(hhmm) {
+    var parts = hhmm.split(":");
+    return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+  }
+  function toHHMM(mins) {
+    mins = ((mins % 1440) + 1440) % 1440;
+    return pad2(Math.floor(mins / 60)) + ":" + pad2(mins % 60);
+  }
+  function formatKoreanDate(d) {
+    return (d.getMonth() + 1) + "월 " + d.getDate() + "일 " + WEEKDAY_KO_FULL[d.getDay()] + "요일";
+  }
+  function getMonday(d) {
+    var date = new Date(d);
+    var day = (date.getDay() + 6) % 7; // 0 = Monday
+    date.setDate(date.getDate() - day);
+    date.setHours(0, 0, 0, 0);
+    return date;
+  }
+  function getWeekDates(offset) {
+    var base = getMonday(new Date());
+    base.setDate(base.getDate() + offset * 7);
+    var arr = [];
+    for (var i = 0; i < 7; i++) {
+      var d = new Date(base);
+      d.setDate(base.getDate() + i);
+      arr.push(d);
+    }
+    return arr;
+  }
+  function sameDate(a, b) { return dateKey(a) === dateKey(b); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function getPlans(key) {
+    return (allPlans[key] || []).slice().sort(function (a, b) {
+      return toMin(a.start) - toMin(b.start);
+    });
+  }
+
+  // ---- DOM refs ----
+  var homeScreen = document.getElementById("home-screen");
+  var plannerScreen = document.getElementById("planner-screen");
+  var lockDate = document.getElementById("lock-date");
+  var lockTime = document.getElementById("lock-time");
+  var todayPlanList = document.getElementById("today-plan-list");
+  var openPlannerBtn = document.getElementById("open-planner-btn");
+  var backBtn = document.getElementById("back-btn");
+  var prevWeekBtn = document.getElementById("prev-week-btn");
+  var nextWeekBtn = document.getElementById("next-week-btn");
+  var weekDaysEl = document.getElementById("week-days");
+  var selectedDateLabel = document.getElementById("selected-date-label");
+  var clockSvg = document.getElementById("clock-svg");
+  var planTableBody = document.getElementById("plan-table-body");
+  var emptyMsg = document.getElementById("empty-msg");
+
+  var modalBackdrop = document.getElementById("modal-backdrop");
+  var modalTitle = document.getElementById("modal-title");
+  var inputStart = document.getElementById("input-start");
+  var inputEnd = document.getElementById("input-end");
+  var inputText = document.getElementById("input-text");
+  var deleteBtn = document.getElementById("delete-btn");
+  var cancelBtn = document.getElementById("cancel-btn");
+  var saveBtn = document.getElementById("save-btn");
+
+  // ---- home screen ----
+  function renderHome() {
+    var now = new Date();
+    lockDate.textContent = formatKoreanDate(now);
+    lockTime.textContent = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
+
+    var plans = getPlans(dateKey(now));
+    if (plans.length === 0) {
+      todayPlanList.innerHTML = '<p class="empty-msg-home">오늘의 플랜이 없어요</p>';
+    } else {
+      todayPlanList.innerHTML = plans.map(function (p) {
+        return '<div class="home-plan-item"><span class="time">' + p.start + '&ndash;' + p.end +
+          '</span><span class="text">' + escapeHtml(p.text) + '</span></div>';
+      }).join("");
+    }
+  }
+
+  // ---- svg helpers ----
+  function svgEl(tag, attrs) {
+    var el = document.createElementNS(SVG_NS, tag);
+    for (var k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function polarToXY(cx, cy, r, angleDeg) {
+    var rad = (angleDeg * Math.PI) / 180;
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  }
+  function minToAngle(min) { return (min / 1440) * 360 - 90; }
+  function arcPath(cx, cy, r, startMin, endMin) {
+    var startAngle = minToAngle(startMin);
+    var endAngle = minToAngle(endMin);
+    var startPt = polarToXY(cx, cy, r, startAngle);
+    var endPt = polarToXY(cx, cy, r, endAngle);
+    var diff = endMin - startMin;
+    if (diff <= 0) diff += 1440;
+    var largeArc = diff > 720 ? 1 : 0;
+    return "M " + cx + " " + cy +
+      " L " + startPt.x + " " + startPt.y +
+      " A " + r + " " + r + " 0 " + largeArc + " 1 " + endPt.x + " " + endPt.y + " Z";
+  }
+  function getSvgPoint(svg, evt) {
+    var pt = svg.createSVGPoint();
+    pt.x = evt.clientX;
+    pt.y = evt.clientY;
+    var ctm = svg.getScreenCTM().inverse();
+    return pt.matrixTransform(ctm);
+  }
+
+  // ---- clock rendering ----
+  function renderClock() {
+    clockSvg.innerHTML = "";
+
+    var track = svgEl("circle", { cx: CX, cy: CY, r: TRACK_R, class: "clock-track" });
+    track.addEventListener("click", function (e) {
+      var pt = getSvgPoint(clockSvg, e);
+      var dx = pt.x - CX, dy = pt.y - CY;
+      var angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+      var norm = (angle + 90 + 360) % 360;
+      var minutes = (norm / 360) * 1440;
+      var snapped = Math.round(minutes / 30) * 30 % 1440;
+      openAddModal(snapped);
+    });
+    clockSvg.appendChild(track);
+
+    var key = dateKey(selectedDate);
+    var plans = getPlans(key);
+    plans.forEach(function (block) {
+      var sMin = toMin(block.start);
+      var eMinRaw = toMin(block.end);
+      var eMin = eMinRaw <= sMin ? eMinRaw + 1440 : eMinRaw;
+      var path = svgEl("path", {
+        d: arcPath(CX, CY, TRACK_R, sMin, eMin),
+        fill: block.color || PALETTE[0],
+        class: "clock-wedge"
+      });
+      var title = svgEl("title", {});
+      title.textContent = block.start + "-" + block.end + " " + block.text;
+      path.appendChild(title);
+      path.addEventListener("click", function (e) {
+        e.stopPropagation();
+        openEditModal(block);
+      });
+      clockSvg.appendChild(path);
+
+      var diff = eMin - sMin;
+      if (diff >= 60) {
+        var midMin = sMin + diff / 2;
+        var midAngle = minToAngle(midMin);
+        var pos = polarToXY(CX, CY, WEDGE_LABEL_R, midAngle);
+        var label = block.text.length > 8 ? block.text.slice(0, 7) + "…" : block.text;
+        var text = svgEl("text", {
+          x: pos.x, y: pos.y, class: "clock-wedge-label",
+          "text-anchor": "middle", "dominant-baseline": "middle"
+        });
+        text.textContent = label;
+        clockSvg.appendChild(text);
+      }
+    });
+
+    var ticksGroup = svgEl("g", { class: "clock-ticks" });
+    var labelsGroup = svgEl("g", { class: "clock-labels" });
+    for (var h = 0; h < 24; h++) {
+      var angle = h * 15 - 90;
+      var p1 = polarToXY(CX, CY, TICK_R1, angle);
+      var p2 = polarToXY(CX, CY, TICK_R2, angle);
+      ticksGroup.appendChild(svgEl("line", {
+        x1: p1.x, y1: p1.y, x2: p2.x, y2: p2.y, class: "clock-tick"
+      }));
+      if (h % 2 === 0) {
+        var lp = polarToXY(CX, CY, LABEL_R, angle);
+        var t = svgEl("text", {
+          x: lp.x, y: lp.y, class: "clock-label",
+          "text-anchor": "middle", "dominant-baseline": "middle"
+        });
+        t.textContent = h;
+        labelsGroup.appendChild(t);
+      }
+    }
+    clockSvg.appendChild(ticksGroup);
+    clockSvg.appendChild(labelsGroup);
+    clockSvg.appendChild(svgEl("circle", { cx: CX, cy: CY, r: 3, fill: "#333" }));
+  }
+
+  // ---- table rendering ----
+  function renderTable() {
+    var key = dateKey(selectedDate);
+    var plans = getPlans(key);
+    planTableBody.innerHTML = "";
+    emptyMsg.style.display = plans.length === 0 ? "block" : "none";
+
+    plans.forEach(function (block) {
+      var tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>" + block.start + "&ndash;" + block.end + "</td>" +
+        "<td>" + escapeHtml(block.text) + "</td>" +
+        '<td><button class="row-del" aria-label="삭제">&times;</button></td>';
+      tr.addEventListener("click", function (e) {
+        if (e.target.classList.contains("row-del")) return;
+        openEditModal(block);
+      });
+      tr.querySelector(".row-del").addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (confirm("이 플랜을 삭제할까요?")) {
+          allPlans[key] = allPlans[key].filter(function (b) { return b.id !== block.id; });
+          savePlans();
+          renderPlanner();
+        }
+      });
+      planTableBody.appendChild(tr);
+    });
+  }
+
+  // ---- week strip ----
+  function renderWeekStrip() {
+    var dates = getWeekDates(plannerWeekOffset);
+    var today = new Date();
+    weekDaysEl.innerHTML = "";
+    dates.forEach(function (d, i) {
+      var btn = document.createElement("button");
+      btn.className = "week-day-btn";
+      if (sameDate(d, today)) btn.className += " is-today";
+      if (sameDate(d, selectedDate)) btn.className += " is-selected";
+      btn.innerHTML =
+        '<span class="wd-label">' + WEEKDAY_KO[i] + "</span>" +
+        '<span class="wd-date">' + d.getDate() + "</span>";
+      btn.addEventListener("click", function () {
+        selectedDate = d;
+        renderPlanner();
+      });
+      weekDaysEl.appendChild(btn);
+    });
+  }
+
+  function renderSelectedDateLabel() {
+    selectedDateLabel.textContent = formatKoreanDate(selectedDate);
+  }
+
+  function renderPlanner() {
+    renderWeekStrip();
+    renderSelectedDateLabel();
+    renderClock();
+    renderTable();
+  }
+
+  // ---- modal ----
+  function showModal() { modalBackdrop.classList.add("show"); }
+  function closeModal() { modalBackdrop.classList.remove("show"); editingId = null; }
+
+  function openAddModal(startMinSnapped) {
+    editingId = null;
+    modalTitle.textContent = "플랜 추가";
+    inputStart.value = toHHMM(startMinSnapped);
+    inputEnd.value = toHHMM(startMinSnapped + 30);
+    inputText.value = "";
+    deleteBtn.style.display = "none";
+    showModal();
+    inputText.focus();
+  }
+  function openEditModal(block) {
+    editingId = block.id;
+    modalTitle.textContent = "플랜 수정";
+    inputStart.value = block.start;
+    inputEnd.value = block.end;
+    inputText.value = block.text;
+    deleteBtn.style.display = "inline-block";
+    showModal();
+  }
+
+  saveBtn.addEventListener("click", function () {
+    var start = inputStart.value;
+    var end = inputEnd.value;
+    var text = inputText.value.trim();
+    if (!start || !end) { alert("시작/종료 시간을 입력해주세요."); return; }
+    if (!text) { alert("내용을 입력해주세요."); return; }
+    var sMin = toMin(start), eMin = toMin(end);
+    if (eMin <= sMin) { alert("종료 시간은 시작 시간보다 늦어야 해요."); return; }
+
+    var key = dateKey(selectedDate);
+    if (!allPlans[key]) allPlans[key] = [];
+
+    if (editingId) {
+      var block = allPlans[key].find(function (b) { return b.id === editingId; });
+      if (block) { block.start = start; block.end = end; block.text = text; }
+    } else {
+      var color = PALETTE[allPlans[key].length % PALETTE.length];
+      allPlans[key].push({
+        id: "p" + Date.now() + Math.random().toString(16).slice(2),
+        start: start, end: end, text: text, color: color
+      });
+    }
+    savePlans();
+    closeModal();
+    renderPlanner();
+  });
+
+  deleteBtn.addEventListener("click", function () {
+    if (!editingId) return;
+    if (!confirm("이 플랜을 삭제할까요?")) return;
+    var key = dateKey(selectedDate);
+    allPlans[key] = (allPlans[key] || []).filter(function (b) { return b.id !== editingId; });
+    savePlans();
+    closeModal();
+    renderPlanner();
+  });
+
+  cancelBtn.addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", function (e) {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  // ---- navigation ----
+  openPlannerBtn.addEventListener("click", function () {
+    plannerWeekOffset = 0;
+    selectedDate = new Date();
+    homeScreen.classList.remove("active");
+    plannerScreen.classList.add("active");
+    renderPlanner();
+  });
+  backBtn.addEventListener("click", function () {
+    plannerScreen.classList.remove("active");
+    homeScreen.classList.add("active");
+    renderHome();
+  });
+  prevWeekBtn.addEventListener("click", function () {
+    plannerWeekOffset -= 1;
+    selectedDate = new Date(selectedDate);
+    selectedDate.setDate(selectedDate.getDate() - 7);
+    renderPlanner();
+  });
+  nextWeekBtn.addEventListener("click", function () {
+    plannerWeekOffset += 1;
+    selectedDate = new Date(selectedDate);
+    selectedDate.setDate(selectedDate.getDate() + 7);
+    renderPlanner();
+  });
+
+  // ---- init ----
+  renderHome();
+  setInterval(renderHome, 15000);
+})();
