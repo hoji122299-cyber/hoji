@@ -150,20 +150,68 @@
     return pt.matrixTransform(ctm);
   }
 
+  // ---- clock drag-to-create ----
+  var dragState = null;
+
+  function pointToSnappedMin(pt) {
+    var dx = pt.x - CX, dy = pt.y - CY;
+    var angle = (Math.atan2(dy, dx) * 180) / Math.PI;
+    var norm = (angle + 90 + 360) % 360;
+    var minutes = (norm / 360) * 1440;
+    return Math.round(minutes / 30) * 30 % 1440;
+  }
+
+  function dragRange() {
+    var s = dragState.startMin, c = dragState.currentMin;
+    var fwd = (c - s + 1440) % 1440;
+    var bwd = (s - c + 1440) % 1440;
+    if (fwd === 0) return { start: s, end: (s + 30) % 1440 };
+    if (fwd <= bwd) return { start: s, end: c };
+    return { start: c, end: s };
+  }
+
+  function updateDragPreview() {
+    var range = dragRange();
+    var endAdj = range.end <= range.start ? range.end + 1440 : range.end;
+    dragState.previewEl.setAttribute("d", arcPath(CX, CY, TRACK_R, range.start, endAdj));
+  }
+
+  function attachTrackDrag(track) {
+    track.addEventListener("pointerdown", function (e) {
+      var pt = getSvgPoint(clockSvg, e);
+      var startMin = pointToSnappedMin(pt);
+      var preview = svgEl("path", { class: "clock-wedge-preview" });
+      clockSvg.appendChild(preview);
+      dragState = { startMin: startMin, currentMin: startMin, previewEl: preview };
+      updateDragPreview();
+      track.setPointerCapture(e.pointerId);
+    });
+    track.addEventListener("pointermove", function (e) {
+      if (!dragState) return;
+      var pt = getSvgPoint(clockSvg, e);
+      dragState.currentMin = pointToSnappedMin(pt);
+      updateDragPreview();
+    });
+    track.addEventListener("pointerup", function () {
+      if (!dragState) return;
+      var range = dragRange();
+      dragState.previewEl.remove();
+      dragState = null;
+      openAddModal(range.start, range.end);
+    });
+    track.addEventListener("pointercancel", function () {
+      if (!dragState) return;
+      dragState.previewEl.remove();
+      dragState = null;
+    });
+  }
+
   // ---- clock rendering ----
   function renderClock() {
     clockSvg.innerHTML = "";
 
     var track = svgEl("circle", { cx: CX, cy: CY, r: TRACK_R, class: "clock-track" });
-    track.addEventListener("click", function (e) {
-      var pt = getSvgPoint(clockSvg, e);
-      var dx = pt.x - CX, dy = pt.y - CY;
-      var angle = (Math.atan2(dy, dx) * 180) / Math.PI;
-      var norm = (angle + 90 + 360) % 360;
-      var minutes = (norm / 360) * 1440;
-      var snapped = Math.round(minutes / 30) * 30 % 1440;
-      openAddModal(snapped);
-    });
+    attachTrackDrag(track);
     clockSvg.appendChild(track);
 
     var key = dateKey(selectedDate);
@@ -320,11 +368,17 @@
   function showModal() { modalBackdrop.classList.add("show"); }
   function closeModal() { modalBackdrop.classList.remove("show"); editingId = null; }
 
-  function openAddModal(startMinSnapped) {
+  function formatHourLabel(min) {
+    var h = Math.floor(min / 60), m = min % 60;
+    return m === 0 ? h + "시" : h + "시 " + m + "분";
+  }
+
+  function openAddModal(startMin, endMin) {
+    if (endMin === undefined) endMin = (startMin + 30) % 1440;
     editingId = null;
-    modalTitle.textContent = "플랜 추가";
-    inputStart.value = toHHMM(startMinSnapped);
-    inputEnd.value = toHHMM(startMinSnapped + 30);
+    modalTitle.textContent = formatHourLabel(startMin) + "부터 " + formatHourLabel(endMin) + "까지 뭐 할래 호지야?";
+    inputStart.value = toHHMM(startMin);
+    inputEnd.value = toHHMM(endMin);
     inputText.value = "";
     deleteBtn.style.display = "none";
     showModal();

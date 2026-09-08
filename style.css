@@ -247,6 +247,7 @@ body {
   border-radius: 10px;
   resize: vertical;
   background: #fafbfe;
+  color: #000;
 }
 
 .row-del {
@@ -325,9 +326,10 @@ body {
 .btn-danger { background: #fff; color: #d33; border: 1px solid #f0b7b7; }
 
 /* SVG clock elements */
-.clock-track { fill: #f3f4f6; }
+.clock-track { fill: #f3f4f6; cursor: pointer; touch-action: none; }
 .clock-ticks, .clock-labels { pointer-events: none; }
 .clock-tick { stroke: #cfd3da; stroke-width: 1.5; }
 .clock-label { font-size: 11px; fill: #9aa0ab; }
 .clock-wedge { stroke: #fff; stroke-width: 1.5; cursor: pointer; }
 .clock-wedge-label { font-size: 10.5px; fill: #333; pointer-events: none; }
+.clock-wedge-preview { fill: rgba(46,91,255,0.35); stroke: #2e5bff; stroke-width: 2; pointer-events: none; }
