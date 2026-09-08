@@ -320,6 +320,20 @@ body {
   font-size: 14px;
   resize: vertical;
 }
+.modal label.color-field {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.color-field input[type="color"] {
+  width: 44px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
 .modal-actions {
   display: flex;
   justify-content: space-between;

@@ -99,6 +99,7 @@
   var inputStart = document.getElementById("input-start");
   var inputEnd = document.getElementById("input-end");
   var inputText = document.getElementById("input-text");
+  var inputColor = document.getElementById("input-color");
   var deleteBtn = document.getElementById("delete-btn");
   var cancelBtn = document.getElementById("cancel-btn");
   var saveBtn = document.getElementById("save-btn");
@@ -399,6 +400,9 @@
     inputStart.value = toHHMM(startMin);
     inputEnd.value = toHHMM(endMin);
     inputText.value = "";
+    var key = dateKey(selectedDate);
+    var count = (allPlans[key] || []).length;
+    inputColor.value = PALETTE[count % PALETTE.length];
     deleteBtn.style.display = "none";
     showModal();
     inputText.focus();
@@ -409,6 +413,7 @@
     inputStart.value = block.start;
     inputEnd.value = block.end;
     inputText.value = block.text;
+    inputColor.value = block.color || PALETTE[0];
     deleteBtn.style.display = "inline-block";
     showModal();
   }
@@ -425,11 +430,11 @@
     var key = dateKey(selectedDate);
     if (!allPlans[key]) allPlans[key] = [];
 
+    var color = inputColor.value;
     if (editingId) {
       var block = allPlans[key].find(function (b) { return b.id === editingId; });
-      if (block) { block.start = start; block.end = end; block.text = text; }
+      if (block) { block.start = start; block.end = end; block.text = text; block.color = color; }
     } else {
-      var color = PALETTE[allPlans[key].length % PALETTE.length];
       allPlans[key].push({
         id: "p" + Date.now() + Math.random().toString(16).slice(2),
         start: start, end: end, text: text, color: color, detail: ""
