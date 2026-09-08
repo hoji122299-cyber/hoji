@@ -47,6 +47,10 @@ body {
    or briefly under-report on iOS, but a fixed box anchored to inset:0
    always matches exactly what's actually on screen, with no calculation. */
 @media (max-width: 479.98px) {
+  /* If the OS leaves a native sliver uncovered at an edge, match the
+     currently-visible screen's own color there instead of a mismatched
+     neutral, so it reads as an intentional edge, not a rendering gap. */
+  body { background: var(--edge-color, #1c5a73); }
   .phone {
     position: fixed;
     top: 0;
@@ -156,12 +160,14 @@ body {
   border-radius: 50%;
   border: none;
   background: #fff;
-  color: #2e5bff;
-  font-size: 30px;
-  line-height: 1;
+  color: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 8px 20px rgba(0,0,0,0.25);
   cursor: pointer;
 }
+.fab svg { width: 26px; height: 26px; }
 .fab:active { transform: scale(0.95); }
 
 .bg-btn {
@@ -173,12 +179,14 @@ body {
   border-radius: 50%;
   border: none;
   background: rgba(255,255,255,0.85);
-  color: #333;
-  font-size: 21px;
-  line-height: 1;
+  color: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 8px 20px rgba(0,0,0,0.2);
   cursor: pointer;
 }
+.bg-btn svg { width: 22px; height: 22px; }
 .bg-btn:active { transform: scale(0.95); }
 
 /* ---------- Planner screen ---------- */

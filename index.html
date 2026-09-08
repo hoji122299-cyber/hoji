@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>호지's 플랜</title>
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,8 +22,12 @@
         <div class="lock-time" id="lock-time"></div>
         <div class="today-plan-list" id="today-plan-list"></div>
       </div>
-      <button id="open-planner-btn" class="fab" title="데일리 플랜 만들기">+</button>
-      <button id="change-bg-btn" class="bg-btn" title="배경 사진 변경" aria-label="배경 사진 변경">🖼️</button>
+      <button id="open-planner-btn" class="fab" title="데일리 플랜 만들기" aria-label="데일리 플랜 만들기">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </button>
+      <button id="change-bg-btn" class="bg-btn" title="배경 사진 변경" aria-label="배경 사진 변경">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 16l-5.5-5.5a1.5 1.5 0 0 0-2.1 0L4 19"/></svg>
+      </button>
       <input type="file" id="bg-file-input" accept="image/*" hidden>
     </section>
 
@@ -85,6 +89,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=12"></script>
+  <script src="app.js?v=13"></script>
 </body>
 </html>

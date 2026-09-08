@@ -66,16 +66,44 @@
       alert("사진이 너무 커서 저장하지 못했어요. 다른 사진으로 시도해주세요.");
     }
   }
+  function setEdgeColor(color) {
+    document.documentElement.style.setProperty("--edge-color", color);
+  }
+  function sampleBottomEdgeColor(dataUrl, callback) {
+    var img = new Image();
+    img.onload = function () {
+      var w = 16, h = 16;
+      var canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext("2d");
+      var sliceH = img.height * 0.15;
+      ctx.drawImage(img, 0, img.height - sliceH, img.width, sliceH, 0, 0, w, h);
+      var data = ctx.getImageData(0, 0, w, h).data;
+      var r = 0, g = 0, b = 0, n = 0;
+      for (var i = 0; i < data.length; i += 4) { r += data[i]; g += data[i + 1]; b += data[i + 2]; n++; }
+      // Blend toward black to match the dark scrim drawn over the photo's
+      // bottom edge, so the sampled color matches what's actually shown.
+      var scrim = 0.5;
+      r = Math.round((r / n) * (1 - scrim));
+      g = Math.round((g / n) * (1 - scrim));
+      b = Math.round((b / n) * (1 - scrim));
+      callback("rgb(" + r + "," + g + "," + b + ")");
+    };
+    img.src = dataUrl;
+  }
   function applyBg(dataUrl) {
     if (dataUrl) {
       lockBg.style.backgroundImage =
         "linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.12) 35%, rgba(0,0,0,0.5)), url(" + dataUrl + ")";
       lockBg.style.backgroundSize = "cover";
       lockBg.style.backgroundPosition = "center";
+      sampleBottomEdgeColor(dataUrl, setEdgeColor);
     } else {
       lockBg.style.backgroundImage = "";
       lockBg.style.backgroundSize = "";
       lockBg.style.backgroundPosition = "";
+      setEdgeColor("#1c5a73");
     }
   }
 
@@ -517,11 +545,14 @@
     selectedDate = new Date();
     homeScreen.classList.remove("active");
     plannerScreen.classList.add("active");
+    setEdgeColor("#ffffff");
     renderPlanner();
   });
   backBtn.addEventListener("click", function () {
     plannerScreen.classList.remove("active");
     homeScreen.classList.add("active");
+    var savedBg = loadBg();
+    if (savedBg) { sampleBottomEdgeColor(savedBg, setEdgeColor); } else { setEdgeColor("#1c5a73"); }
     renderHome();
   });
   prevWeekBtn.addEventListener("click", function () {
