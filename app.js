@@ -6,37 +6,7 @@
   // A standalone home-screen launch can also report a transitional height
   // before its launch animation settles, so re-measure a few times early on.
   function setAppHeight() {
-    // In a true standalone (home-screen) launch on iOS, window.innerHeight
-    // can under-report the real screen height by the status-bar/home-
-    // indicator amount even with viewport-fit=cover; screen.height gives
-    // the real full extent there. Only trust it when it's actually bigger
-    // and we're actually standalone, so a normal Safari tab is unaffected.
-    var h = window.innerHeight;
-    if (navigator.standalone && window.screen && window.screen.height > h) {
-      h = window.screen.height;
-    }
-    document.documentElement.style.setProperty("--app-height", h + "px");
-    updateDebugInfo();
-  }
-
-  function updateDebugInfo() {
-    var el = document.getElementById("debug-info");
-    if (!el) return;
-    var standaloneMedia = window.matchMedia && window.matchMedia("(display-mode: standalone)").matches;
-    var lines = [
-      "innerW x innerH: " + window.innerWidth + " x " + window.innerHeight,
-      "clientW x clientH: " + document.documentElement.clientWidth + " x " + document.documentElement.clientHeight,
-      "screen: " + window.screen.width + " x " + window.screen.height,
-      "devicePixelRatio: " + window.devicePixelRatio,
-      "navigator.standalone: " + navigator.standalone,
-      "display-mode standalone: " + standaloneMedia,
-      "--app-height: " + getComputedStyle(document.documentElement).getPropertyValue("--app-height"),
-      "phone rect: " + JSON.stringify((function () {
-        var r = document.querySelector(".phone").getBoundingClientRect();
-        return { w: Math.round(r.width), h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(r.bottom) };
-      })())
-    ];
-    el.textContent = lines.join("\n");
+    document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
   }
   setAppHeight();
   window.addEventListener("load", setAppHeight);
