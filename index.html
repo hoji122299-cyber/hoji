@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>호지's 플랜</title>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,6 +23,8 @@
         <div class="today-plan-list" id="today-plan-list"></div>
       </div>
       <button id="open-planner-btn" class="fab" title="데일리 플랜 만들기">+</button>
+      <button id="change-bg-btn" class="bg-btn" title="배경 사진 변경" aria-label="배경 사진 변경">🖼️</button>
+      <input type="file" id="bg-file-input" accept="image/*" hidden>
     </section>
 
     <!-- Planner Screen -->
@@ -83,6 +85,6 @@
     </div>
   </div>
 
-  <script src="app.js?v=11"></script>
+  <script src="app.js?v=12"></script>
 </body>
 </html>

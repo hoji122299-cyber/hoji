@@ -22,6 +22,7 @@
   });
 
   var STORAGE_KEY = "dailyPlanData_v1";
+  var BG_STORAGE_KEY = "dailyPlanBg_v1";
   var WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"];
   var WEEKDAY_KO_FULL = ["일", "월", "화", "수", "목", "금", "토"];
   var PALETTE = [
@@ -50,6 +51,32 @@
   }
   function savePlans() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(allPlans));
+  }
+  function loadBg() {
+    try {
+      return localStorage.getItem(BG_STORAGE_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+  function saveBg(dataUrl) {
+    try {
+      localStorage.setItem(BG_STORAGE_KEY, dataUrl);
+    } catch (e) {
+      alert("사진이 너무 커서 저장하지 못했어요. 다른 사진으로 시도해주세요.");
+    }
+  }
+  function applyBg(dataUrl) {
+    if (dataUrl) {
+      lockBg.style.backgroundImage =
+        "linear-gradient(180deg, rgba(0,0,0,0.28), rgba(0,0,0,0.12) 35%, rgba(0,0,0,0.5)), url(" + dataUrl + ")";
+      lockBg.style.backgroundSize = "cover";
+      lockBg.style.backgroundPosition = "center";
+    } else {
+      lockBg.style.backgroundImage = "";
+      lockBg.style.backgroundSize = "";
+      lockBg.style.backgroundPosition = "";
+    }
   }
 
   // ---- date/time helpers ----
@@ -101,10 +128,13 @@
   // ---- DOM refs ----
   var homeScreen = document.getElementById("home-screen");
   var plannerScreen = document.getElementById("planner-screen");
+  var lockBg = document.querySelector(".lock-bg");
   var lockDate = document.getElementById("lock-date");
   var lockTime = document.getElementById("lock-time");
   var todayPlanList = document.getElementById("today-plan-list");
   var openPlannerBtn = document.getElementById("open-planner-btn");
+  var changeBgBtn = document.getElementById("change-bg-btn");
+  var bgFileInput = document.getElementById("bg-file-input");
   var backBtn = document.getElementById("back-btn");
   var prevWeekBtn = document.getElementById("prev-week-btn");
   var nextWeekBtn = document.getElementById("next-week-btn");
@@ -507,7 +537,37 @@
     renderPlanner();
   });
 
+  // ---- background photo ----
+  changeBgBtn.addEventListener("click", function () {
+    bgFileInput.click();
+  });
+  bgFileInput.addEventListener("change", function () {
+    var file = bgFileInput.files && bgFileInput.files[0];
+    bgFileInput.value = "";
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var maxW = 800;
+        var scale = Math.min(1, maxW / img.width);
+        var w = Math.round(img.width * scale);
+        var h = Math.round(img.height * scale);
+        var canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+        var dataUrl = canvas.toDataURL("image/jpeg", 0.85);
+        saveBg(dataUrl);
+        applyBg(dataUrl);
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
   // ---- init ----
+  applyBg(loadBg());
   renderHome();
   setInterval(renderHome, 15000);
 })();
