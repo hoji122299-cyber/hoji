@@ -24,6 +24,7 @@ body {
   max-width: 420px;
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
   background: #fff;
   overflow: hidden;
   position: relative;
@@ -33,6 +34,7 @@ body {
   display: none;
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
   flex-direction: column;
 }
 .screen.active { display: flex; }

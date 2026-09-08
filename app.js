@@ -1,6 +1,18 @@
 (function () {
   "use strict";
 
+  // iOS Safari's address bar changes the visible viewport height without
+  // always updating CSS dvh until the user scrolls, so measure it directly.
+  function setAppHeight() {
+    document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+  }
+  setAppHeight();
+  window.addEventListener("resize", setAppHeight);
+  window.addEventListener("orientationchange", setAppHeight);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", setAppHeight);
+  }
+
   var STORAGE_KEY = "dailyPlanData_v1";
   var WEEKDAY_KO = ["월", "화", "수", "목", "금", "토", "일"];
   var WEEKDAY_KO_FULL = ["일", "월", "화", "수", "목", "금", "토"];
