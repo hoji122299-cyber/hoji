@@ -18,6 +18,7 @@
   var selectedDate = new Date();
   var editingId = null;
   var expandedRows = {};
+  var expandedHomeIds = {};
 
   // ---- storage helpers ----
   function loadPlans() {
@@ -109,14 +110,32 @@
     lockTime.textContent = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
 
     var plans = getPlans(dateKey(now));
+    todayPlanList.innerHTML = "";
     if (plans.length === 0) {
       todayPlanList.innerHTML = '<p class="empty-msg-home">오늘의 플랜이 없어요</p>';
-    } else {
-      todayPlanList.innerHTML = plans.map(function (p) {
-        return '<div class="home-plan-item"><span class="time">' + p.start + '&ndash;' + p.end +
-          '</span><span class="text">' + escapeHtml(p.text) + '</span></div>';
-      }).join("");
+      return;
     }
+    plans.forEach(function (p) {
+      var isOpen = !!expandedHomeIds[p.id];
+      var item = document.createElement("div");
+      item.className = "home-plan-item";
+      item.innerHTML =
+        '<div class="home-plan-row">' +
+          '<span class="time">' + p.start + '&ndash;' + p.end + '</span>' +
+          '<span class="text">' + escapeHtml(p.text) + '</span>' +
+        '</div>';
+      item.addEventListener("click", function () {
+        expandedHomeIds[p.id] = !expandedHomeIds[p.id];
+        renderHome();
+      });
+      if (isOpen) {
+        var detail = document.createElement("div");
+        detail.className = "home-plan-detail";
+        detail.textContent = p.detail && p.detail.trim() ? p.detail : "적어둔 상세 내용이 없어요";
+        item.appendChild(detail);
+      }
+      todayPlanList.appendChild(item);
+    });
   }
 
   // ---- svg helpers ----

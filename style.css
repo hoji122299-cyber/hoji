@@ -74,17 +74,31 @@ body {
 }
 
 .home-plan-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
   padding: 10px 2px;
   border-bottom: 1px solid rgba(255,255,255,0.25);
   font-size: 14px;
   text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  cursor: pointer;
 }
 .home-plan-item:last-child { border-bottom: none; }
+.home-plan-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
 .home-plan-item .time { font-weight: 600; white-space: nowrap; }
 .home-plan-item .text { text-align: right; opacity: 0.95; }
+
+.home-plan-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.3);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0.9;
+  white-space: pre-wrap;
+}
 
 .empty-msg-home {
   text-align: center;
@@ -332,4 +346,4 @@ body {
 .clock-label { font-size: 11px; fill: #9aa0ab; }
 .clock-wedge { stroke: #fff; stroke-width: 1.5; cursor: pointer; }
 .clock-wedge-label { font-size: 10.5px; fill: #333; pointer-events: none; }
-.clock-wedge-preview { fill: rgba(46,91,255,0.35); stroke: #2e5bff; stroke-width: 2; pointer-events: none; }
+.clock-wedge-preview { fill: rgba(255, 158, 100, 0.4); stroke: #ff8a5c; stroke-width: 2; pointer-events: none; }
