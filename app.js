@@ -6,7 +6,16 @@
   // A standalone home-screen launch can also report a transitional height
   // before its launch animation settles, so re-measure a few times early on.
   function setAppHeight() {
-    document.documentElement.style.setProperty("--app-height", window.innerHeight + "px");
+    // In a true standalone (home-screen) launch on iOS, window.innerHeight
+    // can under-report the real screen height by the status-bar/home-
+    // indicator amount even with viewport-fit=cover; screen.height gives
+    // the real full extent there. Only trust it when it's actually bigger
+    // and we're actually standalone, so a normal Safari tab is unaffected.
+    var h = window.innerHeight;
+    if (navigator.standalone && window.screen && window.screen.height > h) {
+      h = window.screen.height;
+    }
+    document.documentElement.style.setProperty("--app-height", h + "px");
     updateDebugInfo();
   }
 
