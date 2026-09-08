@@ -1,8 +1,16 @@
 * { box-sizing: border-box; }
 
+@font-face {
+  font-family: "Pretendard";
+  src: url("fonts/PretendardExtraBold.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
   background: #e9ebf0;
   display: flex;
   justify-content: center;
@@ -217,6 +225,29 @@ body {
   font-weight: 600;
 }
 .plan-table tr { cursor: pointer; }
+
+.plan-content { cursor: pointer; }
+.plan-content .content-hint {
+  color: #b7bcc7;
+  font-size: 11px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.plan-detail-row td {
+  padding: 0 4px 12px;
+  border-bottom: 1px solid #f2f2f2;
+}
+.plan-detail-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 9px 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  resize: vertical;
+  background: #fafbfe;
+}
 
 .row-del {
   border: none;

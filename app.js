@@ -17,6 +17,7 @@
   var plannerWeekOffset = 0;
   var selectedDate = new Date();
   var editingId = null;
+  var expandedRows = {};
 
   // ---- storage helpers ----
   function loadPlans() {
@@ -232,24 +233,54 @@
     emptyMsg.style.display = plans.length === 0 ? "block" : "none";
 
     plans.forEach(function (block) {
+      var isOpen = !!expandedRows[block.id];
       var tr = document.createElement("tr");
       tr.innerHTML =
         "<td>" + block.start + "&ndash;" + block.end + "</td>" +
-        "<td>" + escapeHtml(block.text) + "</td>" +
+        '<td class="plan-content">' + escapeHtml(block.text) +
+          '<span class="content-hint">' + (isOpen ? "▾" : "▸") + " 상세</span></td>" +
         '<td><button class="row-del" aria-label="삭제">&times;</button></td>';
+
+      tr.querySelector(".plan-content").addEventListener("click", function (e) {
+        e.stopPropagation();
+        expandedRows[block.id] = !expandedRows[block.id];
+        renderTable();
+      });
       tr.addEventListener("click", function (e) {
         if (e.target.classList.contains("row-del")) return;
+        if (e.target.closest(".plan-content")) return;
         openEditModal(block);
       });
       tr.querySelector(".row-del").addEventListener("click", function (e) {
         e.stopPropagation();
         if (confirm("이 플랜을 삭제할까요?")) {
+          delete expandedRows[block.id];
           allPlans[key] = allPlans[key].filter(function (b) { return b.id !== block.id; });
           savePlans();
           renderPlanner();
         }
       });
       planTableBody.appendChild(tr);
+
+      if (isOpen) {
+        var detailTr = document.createElement("tr");
+        detailTr.className = "plan-detail-row";
+        var detailTd = document.createElement("td");
+        detailTd.colSpan = 3;
+        var textarea = document.createElement("textarea");
+        textarea.className = "plan-detail-input";
+        textarea.rows = 4;
+        textarea.placeholder = "상세 내용을 적어보세요 (예: 준비물, 순서, 참고 링크 등)";
+        textarea.value = block.detail || "";
+        textarea.addEventListener("click", function (e) { e.stopPropagation(); });
+        textarea.addEventListener("blur", function () {
+          block.detail = textarea.value;
+          savePlans();
+        });
+        detailTd.appendChild(textarea);
+        detailTr.appendChild(detailTd);
+        planTableBody.appendChild(detailTr);
+      }
     });
   }
 
@@ -328,7 +359,7 @@
       var color = PALETTE[allPlans[key].length % PALETTE.length];
       allPlans[key].push({
         id: "p" + Date.now() + Math.random().toString(16).slice(2),
-        start: start, end: end, text: text, color: color
+        start: start, end: end, text: text, color: color, detail: ""
       });
     }
     savePlans();
@@ -340,6 +371,7 @@
     if (!editingId) return;
     if (!confirm("이 플랜을 삭제할까요?")) return;
     var key = dateKey(selectedDate);
+    delete expandedRows[editingId];
     allPlans[key] = (allPlans[key] || []).filter(function (b) { return b.id !== editingId; });
     savePlans();
     closeModal();
