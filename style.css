@@ -1,0 +1,433 @@
+* { box-sizing: border-box; }
+
+@font-face {
+  font-family: "Pretendard";
+  src: url("fonts/PretendardExtraBold.otf") format("opentype");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+html, body { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+  /* A soft neutral rather than a visibly "unstyled" grey, so if a sliver of
+     native chrome is ever left uncovered by the OS, it reads as a quiet
+     edge instead of an obvious gap. */
+  background: #f5f4f2;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+.phone {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+}
+
+.screen {
+  display: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  min-height: var(--app-height, 100dvh);
+  flex-direction: column;
+}
+.screen.active { display: flex; }
+
+/* On a real phone (narrow viewport), pin the app directly to the visual
+   viewport's edges instead of sizing it with vh/dvh — those units can lag
+   or briefly under-report on iOS, but a fixed box anchored to inset:0
+   always matches exactly what's actually on screen, with no calculation. */
+@media (max-width: 479.98px) {
+  /* If the OS leaves a native sliver uncovered at an edge, match the
+     currently-visible screen's own color there instead of a mismatched
+     neutral, so it reads as an intentional edge, not a rendering gap. */
+  body { background: var(--edge-color, #1c5a73); }
+  .phone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: var(--app-height, 100dvh);
+    width: 100%;
+    max-width: none;
+    min-height: 0;
+  }
+  .screen {
+    min-height: 0;
+    height: 100%;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* On a wider window it shows as a framed phone mockup instead. */
+@media (min-width: 480px) {
+  body { padding: 24px 0; }
+  .phone {
+    min-height: 760px;
+    border-radius: 32px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+  }
+  .screen { min-height: 760px; }
+}
+
+/* ---------- Home screen ---------- */
+#home-screen { position: relative; }
+
+.lock-bg {
+  flex: 1;
+  background: linear-gradient(165deg, #ffe0ad 0%, #ff9c8d 28%, #6fb6c4 62%, #1c5a73 100%);
+  color: #fff;
+  padding: calc(56px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.lock-date {
+  font-size: 15px;
+  letter-spacing: 0.3px;
+  opacity: 0.92;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.lock-time {
+  font-size: 60px;
+  font-weight: 300;
+  margin: 4px 0 28px;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  letter-spacing: 1px;
+}
+
+.today-plan-list {
+  width: 100%;
+  background: rgba(255,255,255,0.16);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 18px;
+  padding: 6px 16px;
+}
+
+.home-plan-item {
+  padding: 10px 2px;
+  border-bottom: 1px solid rgba(255,255,255,0.25);
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
+  cursor: pointer;
+}
+.home-plan-item:last-child { border-bottom: none; }
+.home-plan-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.home-plan-item .time { font-weight: 600; white-space: nowrap; }
+.home-plan-item .text { text-align: right; opacity: 0.95; }
+.home-plan-item.is-current .time,
+.home-plan-item.is-current .text {
+  color: #4ade80;
+  opacity: 1;
+}
+
+.home-plan-detail {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.3);
+  font-size: 12.5px;
+  line-height: 1.5;
+  text-align: left;
+  opacity: 0.9;
+  white-space: pre-wrap;
+}
+
+.empty-msg-home {
+  text-align: center;
+  padding: 18px 0;
+  opacity: 0.85;
+  font-size: 14px;
+}
+
+.fab {
+  position: absolute;
+  right: 22px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+  cursor: pointer;
+}
+.fab svg { width: 26px; height: 26px; }
+.fab:active { transform: scale(0.95); }
+
+.bg-btn {
+  position: absolute;
+  left: 22px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255,255,255,0.85);
+  color: #1c1c1e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  cursor: pointer;
+}
+.bg-btn svg { width: 22px; height: 22px; }
+.bg-btn:active { transform: scale(0.95); }
+
+/* ---------- Planner screen ---------- */
+.planner-header {
+  display: flex;
+  align-items: center;
+  padding: calc(16px + env(safe-area-inset-top)) 12px 8px;
+}
+.planner-header h1 {
+  flex: 1;
+  text-align: center;
+  font-size: 17px;
+  margin: 0;
+}
+.header-spacer { width: 36px; display: inline-block; }
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  color: #333;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.icon-btn:active { background: #f0f0f0; }
+
+.week-nav {
+  display: flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.week-days {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.week-day-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 0;
+  border: none;
+  background: transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #333;
+}
+.week-day-btn .wd-label { font-size: 11px; color: #999; }
+.week-day-btn .wd-date { font-size: 14px; font-weight: 600; }
+.week-day-btn.is-today .wd-date { color: #2e5bff; }
+.week-day-btn.is-selected {
+  background: #2e5bff;
+  color: #fff;
+}
+.week-day-btn.is-selected .wd-label,
+.week-day-btn.is-selected .wd-date { color: #fff; }
+
+.selected-date-label {
+  text-align: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #444;
+  margin: 10px 0 2px;
+}
+
+.clock-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 8px 16px 0;
+}
+#clock-svg {
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+}
+
+.hint {
+  text-align: center;
+  font-size: 12px;
+  color: #999;
+  margin: 6px 0 0;
+}
+
+.plan-table-wrap {
+  padding: 12px 18px calc(24px + env(safe-area-inset-bottom));
+  flex: 1;
+}
+
+.plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.plan-table th {
+  text-align: left;
+  color: #999;
+  font-weight: 500;
+  padding: 6px 4px;
+  border-bottom: 1px solid #eee;
+}
+.plan-table td {
+  padding: 10px 4px;
+  border-bottom: 1px solid #f2f2f2;
+  vertical-align: top;
+}
+.plan-table td:first-child {
+  white-space: nowrap;
+  color: #2e5bff;
+  font-weight: 600;
+}
+.plan-table tr { cursor: pointer; }
+
+.plan-content { cursor: pointer; }
+.plan-content .content-hint {
+  color: #b7bcc7;
+  font-size: 11px;
+  margin-left: 6px;
+  white-space: nowrap;
+}
+
+.plan-detail-row td {
+  padding: 0 4px 12px;
+  border-bottom: 1px solid #f2f2f2;
+}
+.plan-detail-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 9px 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  resize: vertical;
+  background: #fafbfe;
+  color: #000;
+}
+
+.row-del {
+  border: none;
+  background: none;
+  color: #d33;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.empty-msg {
+  text-align: center;
+  color: #aaa;
+  font-size: 13px;
+  padding: 24px 0;
+}
+
+/* ---------- Modal ---------- */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 100;
+}
+.modal-backdrop.show { display: flex; }
+
+.modal {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+  width: 100%;
+  max-width: 340px;
+}
+.modal h2 {
+  margin: 0 0 16px;
+  font-size: 17px;
+}
+.modal label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+  color: #555;
+  margin-bottom: 14px;
+}
+.modal input, .modal textarea {
+  font-family: inherit;
+  padding: 9px 10px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  font-size: 14px;
+  resize: vertical;
+}
+.modal label.color-field {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+.color-field input[type="color"] {
+  width: 44px;
+  height: 32px;
+  padding: 2px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  background: none;
+}
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 6px;
+}
+.modal-actions-right { display: flex; gap: 8px; }
+
+.btn {
+  border: none;
+  border-radius: 10px;
+  padding: 9px 16px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.btn-primary { background: #2e5bff; color: #fff; }
+.btn-ghost { background: #f0f0f0; color: #333; }
+.btn-danger { background: #fff; color: #d33; border: 1px solid #f0b7b7; }
+
+/* SVG clock elements */
+.clock-track { fill: #f3f4f6; cursor: pointer; touch-action: none; }
+.clock-ticks, .clock-labels { pointer-events: none; }
+.clock-tick { stroke: #cfd3da; stroke-width: 1.5; }
+.clock-label { font-size: 11px; fill: #9aa0ab; }
+.clock-wedge { stroke: #fff; stroke-width: 1.5; cursor: pointer; }
+.clock-wedge-label { font-size: 10.5px; fill: #333; pointer-events: none; }
+.clock-wedge-preview { fill: rgba(255, 158, 100, 0.4); stroke: #ff8a5c; stroke-width: 2; pointer-events: none; }
