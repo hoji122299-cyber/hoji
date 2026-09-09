@@ -142,6 +142,12 @@
     return arr;
   }
   function sameDate(a, b) { return dateKey(a) === dateKey(b); }
+  function isNowInRange(startHHMM, endHHMM, nowMin) {
+    var sMin = toMin(startHHMM);
+    var eMinRaw = toMin(endHHMM);
+    var eMin = eMinRaw <= sMin ? eMinRaw + 1440 : eMinRaw;
+    return (nowMin >= sMin && nowMin < eMin) || (nowMin + 1440 >= sMin && nowMin + 1440 < eMin);
+  }
   function escapeHtml(s) {
     return String(s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
@@ -189,6 +195,7 @@
     lockTime.textContent = pad2(now.getHours()) + ":" + pad2(now.getMinutes());
 
     var plans = getPlans(dateKey(now));
+    var nowMin = now.getHours() * 60 + now.getMinutes();
     todayPlanList.innerHTML = "";
     if (plans.length === 0) {
       todayPlanList.innerHTML = '<p class="empty-msg-home">오늘의 플랜이 없어요</p>';
@@ -196,8 +203,9 @@
     }
     plans.forEach(function (p) {
       var isOpen = !!expandedHomeIds[p.id];
+      var isCurrent = isNowInRange(p.start, p.end, nowMin);
       var item = document.createElement("div");
-      item.className = "home-plan-item";
+      item.className = "home-plan-item" + (isCurrent ? " is-current" : "");
       item.innerHTML =
         '<div class="home-plan-row">' +
           '<span class="time">' + p.start + '&ndash;' + p.end + '</span>' +

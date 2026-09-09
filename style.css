@@ -132,6 +132,11 @@ body {
 }
 .home-plan-item .time { font-weight: 600; white-space: nowrap; }
 .home-plan-item .text { text-align: right; opacity: 0.95; }
+.home-plan-item.is-current .time,
+.home-plan-item.is-current .text {
+  color: #4ade80;
+  opacity: 1;
+}
 
 .home-plan-detail {
   margin-top: 8px;
